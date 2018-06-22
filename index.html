@@ -1,0 +1,103 @@
+
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<input id="inputFileToLoad" type="file" onchange="encodeImageFileAsURL();" />
+
+
+<div class="card" style="width:400px;height:200px;">
+  <img class="card-img-top" id="img" src="" alt="Card image">
+  <div class="card-body">
+    <button>Get Details</button>
+    <h4 class="card-title" style="display: inline-block;">Number</h4>
+    <h4 id="carno" style="display: inline-block;"></h4> <br>
+    <p class="card-text" style="display: inline-block;">
+    <label style="display: inline-block;">Model</label> <h4 style="display: inline-block;"id="model"></h4>
+    </p>
+    
+  </div>
+</div>
+
+<script type='text/javascript'>
+var dataImg;
+  function encodeImageFileAsURL() {
+    debugger;
+    var filesSelected = document.getElementById("inputFileToLoad").files;
+    if (filesSelected.length > 0) {
+      var fileToLoad = filesSelected[0];
+
+      var fileReader = new FileReader();
+
+      fileReader.onload = function(fileLoadedEvent) {
+        dataImg = fileLoadedEvent.target.result; // <--- data: base64
+        document.getElementById('img').setAttribute('src', dataImg);
+      }
+      fileReader.readAsDataURL(fileToLoad);
+    }
+  }
+
+  $(document).ready(function(){
+    
+    $("button").click(function(){
+      function dataURItoBlob (imageDataURL) {
+  try {
+    if (!imageDataURL) {
+      
+      return null
+    }
+
+   // convert base64/URLEncoded data component to raw binary data held in a string
+    var byteString
+    if (imageDataURL.split(',')[0].indexOf('base64') >= 0) {
+      byteString = atob(imageDataURL.split(',')[1])
+    } else {
+      byteString = unescape(imageDataURL.split(',')[1])
+    }
+
+    // separate out the mime component
+    var mimeString = imageDataURL.split(',')[0].split(':')[1].split(';')[0]
+
+    // write the bytes of the string to a typed array
+    var ia = new Uint8Array(byteString.length)
+    for (var i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i)
+    }
+
+    return new Blob([ia], {type: mimeString})
+  } catch (e) {
+   
+    return null
+  }
+};
+    var blob = dataURItoBlob(dataImg);
+    var cloudapiSecretKey = 'sk_76df67cca86e4584df9f8f01';
+    var country = 'gb';
+    var url = 'https://api.openalpr.com/v2/recognize?recognize_vehicle=1&country=' + country + '&secret_key=' + cloudapiSecretKey + '&return_image=false'
+    var formData = new FormData()
+      formData.append('image', blob)
+      var options = {
+        'method': 'POST',
+        'url': url,
+        'success':  function(data,status){
+             debugger;
+             $('#carno').html(data.results[0].plate);
+             $('#model').html(data.results[0].vehicle.make_model[0]["name"]);
+             
+        },
+        'error':  function(data,status){
+            alert("Data: " + data + "\nerror: " + status);
+        },
+        'contentType': false,
+        'processData': false,
+        'data': formData
+      }
+      $.ajax(options)
+    debugger;
+       
+    });
+});
+</script>
